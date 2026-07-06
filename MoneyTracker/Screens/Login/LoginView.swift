@@ -14,7 +14,7 @@ struct LoginView: View {
     @State private var showAlert = false
     @State private var alertMessage = ""
     @State private var isLoading = false
-    @State private var isLoggedIn = false
+    @Binding var isLoggedIn: Bool
     
     let auth = AuthService.shared
     
@@ -54,25 +54,6 @@ struct LoginView: View {
         .alert(alertMessage, isPresented: $showAlert) {
             Button("OK") { }
         }
-        .fullScreenCover(isPresented: $isLoggedIn) {
-            VStack(spacing: 20) {
-                Text("Добро пожаловать!")
-                    .font(.largeTitle)
-                    .padding()
-                
-                if let user = auth.currentUser {
-                    Text("Вы вошли как: \(user.username)")
-                        .font(.headline)
-                }
-                
-                Button("Выйти") {
-                    try? auth.logout()
-                    isLoggedIn = false
-                }
-                .foregroundColor(.red)
-                .padding()
-            }
-        }
     }
     
     func login() {
@@ -97,6 +78,6 @@ struct LoginView: View {
 
 #Preview {
     NavigationView {
-        LoginView()
+        LoginView(isLoggedIn: .constant(false))
     }
 }
