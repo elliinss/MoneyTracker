@@ -7,32 +7,79 @@
 
 import SwiftUI
 
+protocol AuthService {
+    func login(email: String, password: String, completion: @escaping (Result<User, Error>) -> Void)
+    func logout() throws
+    var currentUser: User? { get }
+}
+
+class LoginViewModel: ObservableObject {
+    @Published var email = ""
+    @Published var password = ""
+    @Published var showAlert = false
+    @Published var alertMessage = ""
+    @Published var isLoading = false
+    @Published var isLoggedIn = false
+    
+    private let authService: AuthService
+    
+    init(authService: AuthService) {
+        self.authService = authService
+    }
+    
+    var isFormValid: Bool {
+        !email.isEmpty && !password.isEmpty
+    }
+    
+    func login() {
+        isLoading = true
+        
+        authService.login(email: email, password: password) { [weak self] result in
+            DispatchQueue.main.async {
+                self?.isLoading = false
+                
+                switch result {
+                case .success(let user):
+                    self?.alertMessage = "Добро пожаловать, \(user.username)!"
+                    self?.showAlert = true
+                    self?.isLoggedIn = true
+                    
+                case .failure(let error):
+                    self?.alertMessage = error.localizedDescription
+                    self?.showAlert = true
+                }
+            }
+        }
+    }
+    
+    func logout() {
+        try? authService.logout()
+        isLoggedIn = false
+    }
+}
+
 struct LoginView: View {
-    @State private var email = ""
-    @State private var password = ""
+    @StateObject private var viewModel: LoginViewModel
     
-    @State private var showAlert = false
-    @State private var alertMessage = ""
-    @State private var isLoading = false
-    @Binding var isLoggedIn: Bool
-    
-    let auth = AuthService.shared
+    init(authService: AuthService = AuthServiceImpl()) {
+        _viewModel = StateObject(wrappedValue: LoginViewModel(authService: authService))
+    }
     
     var body: some View {
         Form {
             Section("Вход в аккаунт") {
-                TextField("Email", text: $email)
+                TextField("Email", text: $viewModel.email)
                     .keyboardType(.emailAddress)
                     .autocapitalization(.none)
                 
-                SecureField("Пароль", text: $password)
+                SecureField("Пароль", text: $viewModel.password)
             }
             
             Section {
                 Button {
-                    login()
+                    viewModel.login()
                 } label: {
-                    if isLoading {
+                    if viewModel.isLoading {
                         ProgressView()
                             .frame(maxWidth: .infinity)
                     } else {
@@ -41,7 +88,7 @@ struct LoginView: View {
                     }
                 }
                 .foregroundColor(.blue)
-                .disabled(isLoading || email.isEmpty || password.isEmpty)
+                .disabled(viewModel.isLoading || !viewModel.isFormValid)
             }
             
             Section {
@@ -51,33 +98,32 @@ struct LoginView: View {
             }
         }
         .navigationTitle("Вход")
-        .alert(alertMessage, isPresented: $showAlert) {
+        .alert(viewModel.alertMessage, isPresented: $viewModel.showAlert) {
             Button("OK") { }
         }
-    }
-    
-    func login() {
-        isLoading = true
-        
-        auth.login(email: email, password: password) { result in
-            isLoading = false
-            
-            switch result {
-            case .success(let user):
-                alertMessage = "Добро пожаловать, \(user.username)!"
-                showAlert = true
-                isLoggedIn = true
+        .fullScreenCover(isPresented: $viewModel.isLoggedIn) {
+            VStack(spacing: 20) {
+                Text("Добро пожаловать!")
+                    .font(.largeTitle)
+                    .padding()
                 
-            case .failure(let error):
-                alertMessage = error.localizedDescription
-                showAlert = true
+                if let user = viewModel.authService?.currentUser {
+                    Text("Вы вошли как: \(user.username)")
+                        .font(.headline)
+                }
+                
+                Button("Выйти") {
+                    viewModel.logout()
+                }
+                .foregroundColor(.red)
+                .padding()
             }
         }
     }
 }
 
 #Preview {
-    NavigationView {
-        LoginView(isLoggedIn: .constant(false))
+    NavigationStack {
+        LoginView()
     }
 }

@@ -8,13 +8,13 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var IsLoggedIn = false
+    @State private var isLoggedIn = false
     
     var body: some View {
-        if isLoggedIn{
+        if isLoggedIn {
             MainView()
         } else {
-            NavigationView {
+            NavigationStack {
                 VStack(spacing: 30) {
                     Text("Money Tracker")
                         .font(.largeTitle)
@@ -31,9 +31,8 @@ struct ContentView: View {
                         }
                         .buttonStyle(.borderedProminent)
                         
-                        
                         NavigationLink("Регистрация") {
-                            RegisterView()
+                            RegisterView(isLoggedIn: $isLoggedIn)
                         }
                         .buttonStyle(.borderedProminent)
                     }
@@ -42,7 +41,6 @@ struct ContentView: View {
                     Spacer()
                 }
                 .padding()
-                
             }
         }
     }

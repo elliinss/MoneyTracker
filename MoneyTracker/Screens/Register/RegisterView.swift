@@ -7,53 +7,23 @@
 
 import SwiftUI
 
-struct RegisterView: View {
-    @State private var username = ""
-    @State private var email = ""
-    @State private var password = ""
-    @State private var confirmPassword = ""
+protocol AuthService {
+    func register(email: String, password: String, username: String, completion: @escaping (Result<User, Error>) -> Void)
+}
+
+class RegisterViewModel: ObservableObject {
+    @Published var username = ""
+    @Published var email = ""
+    @Published var password = ""
+    @Published var confirmPassword = ""
+    @Published var showAlert = false
+    @Published var alertMessage = ""
+    @Published var isLoading = false
     
-    @State private var showAlert = false
-    @State private var alertMessage = ""
-    @State private var isLoading = false
+    private let authService: AuthService
     
-    let auth = AuthService.shared
-    
-    var body: some View {
-        Form {
-            Section("Новый аккаунт") {
-                TextField("Имя пользователя", text: $username)
-                    .autocapitalization(.none)
-                
-                TextField("Email", text: $email)
-                    .keyboardType(.emailAddress)
-                    .autocapitalization(.none)
-                
-                SecureField("Пароль (мин. 6 символов)", text: $password)
-                
-                SecureField("Подтвердите пароль", text: $confirmPassword)
-            }
-            
-            Section {
-                Button {
-                    register()
-                } label: {
-                    if isLoading {
-                        ProgressView()
-                            .frame(maxWidth: .infinity)
-                    } else {
-                        Text("Зарегистрироваться")
-                            .frame(maxWidth: .infinity)
-                    }
-                }
-                .foregroundColor(.blue)
-                .disabled(isLoading || !isFormValid)
-            }
-        }
-        .navigationTitle("Регистрация")
-        .alert(alertMessage, isPresented: $showAlert) {
-            Button("OK") { }
-        }
+    init(authService: AuthService) {
+        self.authService = authService
     }
     
     var isFormValid: Bool {
@@ -72,29 +42,76 @@ struct RegisterView: View {
         
         isLoading = true
         
-        auth.register(email: email, password: password, username: username) { result in
-            isLoading = false
-            
-            switch result {
-            case .success(let user):
-                alertMessage = "Добро пожаловать, \(user.username)!"
-                showAlert = true
+        authService.register(email: email, password: password, username: username) { [weak self] result in
+            DispatchQueue.main.async {
+                self?.isLoading = false
                 
-                username = ""
-                email = ""
-                password = ""
-                confirmPassword = ""
-                
-            case .failure(let error):
-                alertMessage = error.localizedDescription
-                showAlert = true
+                switch result {
+                case .success(let user):
+                    self?.alertMessage = "Добро пожаловать, \(user.username)!"
+                    self?.showAlert = true
+                    
+                    self?.username = ""
+                    self?.email = ""
+                    self?.password = ""
+                    self?.confirmPassword = ""
+                    
+                case .failure(let error):
+                    self?.alertMessage = error.localizedDescription
+                    self?.showAlert = true
+                }
             }
         }
     }
 }
 
+struct RegisterView: View {
+    @StateObject private var viewModel: RegisterViewModel
+    
+    init(authService: AuthService = AuthServiceImpl()) {
+        _viewModel = StateObject(wrappedValue: RegisterViewModel(authService: authService))
+    }
+    
+    var body: some View {
+        Form {
+            Section("Новый аккаунт") {
+                TextField("Имя пользователя", text: $viewModel.username)
+                    .autocapitalization(.none)
+                
+                TextField("Email", text: $viewModel.email)
+                    .keyboardType(.emailAddress)
+                    .autocapitalization(.none)
+                
+                SecureField("Пароль (мин. 6 символов)", text: $viewModel.password)
+                
+                SecureField("Подтвердите пароль", text: $viewModel.confirmPassword)
+            }
+            
+            Section {
+                Button {
+                    viewModel.register()
+                } label: {
+                    if viewModel.isLoading {
+                        ProgressView()
+                            .frame(maxWidth: .infinity)
+                    } else {
+                        Text("Зарегистрироваться")
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+                .foregroundColor(.blue)
+                .disabled(viewModel.isLoading || !viewModel.isFormValid)
+            }
+        }
+        .navigationTitle("Регистрация")
+        .alert(viewModel.alertMessage, isPresented: $viewModel.showAlert) {
+            Button("OK") { }
+        }
+    }
+}
+
 #Preview {
-    NavigationView {
+    NavigationStack {
         RegisterView()
     }
 }
