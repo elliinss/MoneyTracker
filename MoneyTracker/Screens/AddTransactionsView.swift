@@ -11,8 +11,7 @@ import SwiftUI
 struct AddTransactionView: View {
     @Environment(\.dismiss) private var dismiss
     
-    @Binding var transactions: [Transaction]
-    @Binding var selectedCurrency: Currency
+    @ObservedObject var viewModel: TransactionsViewModel
     
     @State private var amount = ""
     @State private var selectedType: TransactionType = .expense
@@ -20,15 +19,8 @@ struct AddTransactionView: View {
     @State private var comment = ""
     @State private var date = Date()
     
-    @State private var showAlert = false
-    @State private var alertMessage = ""
-    
-    var categories: [String] {
-        SettingsManager.shared.categories
-    }
-    
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 Section("Сумма") {
                     TextField("0.00", text: $amount)
@@ -44,7 +36,7 @@ struct AddTransactionView: View {
                 
                 Section("Категория") {
                     Picker("Выберите категорию", selection: $selectedCategory) {
-                        ForEach(categories, id: \.self) { category in
+                        ForEach(viewModel.availableCategories, id: \.self) { category in
                             Text(category).tag(category)
                         }
                     }
@@ -85,22 +77,21 @@ struct AddTransactionView: View {
     }
     
     private func saveTransaction() {
-        guard let amountValue = Double(amount), amountValue > 0 else {
-            alertMessage = "Введите корректную сумму"
-            showAlert = true
-            return
-        }
         
-        let transaction = Transaction(
-            amount: amountValue,
+        let success = viewModel.addTransaction(
+            amount: amount,
             type: selectedType,
             category: selectedCategory,
             comment: comment.isEmpty ? nil : comment,
             date: date
         )
-        
-        transactions.append(transaction)
-        dismiss()
+        if success{
+            dismiss()
+        }
     }
+}
+
+#Preview {
+    AddTransactionView(viewModel: TransactionsViewModel())
 }
 
