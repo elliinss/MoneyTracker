@@ -31,3 +31,7 @@ struct AppUser {
     let email: String
     let username: String
 }
+enum AnalyticsPeriod: String, CaseIterable {
+    case week = "Неделя"
+    case month = "Месяц"
+}
