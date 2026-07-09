@@ -70,7 +70,7 @@ struct AddTransactionView: View {
                     }
                 }
             }
-            .alert(alertMessage, isPresented: $showAlert) {
+            .alert(viewModel.errorMessage, isPresented: $viewModel.showError) {
                 Button("OK") { }
             }
         }
@@ -82,7 +82,7 @@ struct AddTransactionView: View {
             amount: amount,
             type: selectedType,
             category: selectedCategory,
-            comment: comment.isEmpty ? nil : comment,
+            comment: comment,
             date: date
         )
         if success{
