@@ -13,13 +13,14 @@ protocol AuthService {
     var currentUser: User? { get }
 }
 
-class LoginViewModel: ObservableObject {
-    @Published var email = ""
-    @Published var password = ""
-    @Published var showAlert = false
-    @Published var alertMessage = ""
-    @Published var isLoading = false
-    @Published var isLoggedIn = false
+@Observable
+final class LoginViewModel {
+    var email = ""
+    var password = ""
+    var showAlert = false
+    var alertMessage = ""
+    var isLoading = false
+    var isLoggedIn = false
     
     private let authService: AuthService
     
@@ -59,10 +60,10 @@ class LoginViewModel: ObservableObject {
 }
 
 struct LoginView: View {
-    @StateObject private var viewModel: LoginViewModel
+    @State private var viewModel: LoginViewModel
     
     init(authService: AuthService = AuthServiceImpl()) {
-        _viewModel = StateObject(wrappedValue: LoginViewModel(authService: authService))
+        _viewModel = State(initialValue: LoginViewModel(authService: authService))
     }
     
     var body: some View {

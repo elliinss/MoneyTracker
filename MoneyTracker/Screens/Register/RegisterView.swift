@@ -11,14 +11,15 @@ protocol AuthService {
     func register(email: String, password: String, username: String, completion: @escaping (Result<User, Error>) -> Void)
 }
 
-class RegisterViewModel: ObservableObject {
-    @Published var username = ""
-    @Published var email = ""
-    @Published var password = ""
-    @Published var confirmPassword = ""
-    @Published var showAlert = false
-    @Published var alertMessage = ""
-    @Published var isLoading = false
+@Observable
+final class RegisterViewModel {
+    var username = ""
+    var email = ""
+    var password = ""
+    var confirmPassword = ""
+    var showAlert = false
+    var alertMessage = ""
+    var isLoading = false
     
     private let authService: AuthService
     
@@ -66,10 +67,10 @@ class RegisterViewModel: ObservableObject {
 }
 
 struct RegisterView: View {
-    @StateObject private var viewModel: RegisterViewModel
+    @State private var viewModel: RegisterViewModel
     
     init(authService: AuthService = AuthServiceImpl()) {
-        _viewModel = StateObject(wrappedValue: RegisterViewModel(authService: authService))
+        _viewModel = State(initialValue: RegisterViewModel(authService: authService))
     }
     
     var body: some View {
