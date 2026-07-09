@@ -8,58 +8,67 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @State private var selectedCurrency: Currency = SettingsManager.shared.currentCurrency
+    @State private var selectedCurrency: Currency
     
-    @State private var categories: [String] = SettingsManager.shared.categories
+    @StateObject private var settingsManager: SettingsManager
     
     @State private var newCategory = ""
     
     @State private var showAlert = false
     @State private var alertText = ""
     
+    @FocusState private var isTextFieldFocused: Bool
+    
+    init(settingsManager: SettingsManager = SettingsManager.shared) {
+        self._settingsManager = StateObject(wrappedValue: settingsManager)
+        self._selectedCurrency = State(initialValue: settingsManager.currentCurrency)
+    }
+    
     var body: some View {
-        Form {
-            Section("Валюта") {
-                Picker("Выберите валюту", selection: $selectedCurrency) {
-                    Text("₽ Рубль").tag(Currency.rub)
-                    Text("$ Доллар").tag(Currency.usd)
-                    Text("€ Евро").tag(Currency.eur)
-                }
-                .pickerStyle(.menu)
-                .onChange(of: selectedCurrency) { _, newValue in
-                    SettingsManager.shared.currentCurrency = newValue
-                }
-            }
-            
-            Section("Категории") {
-                ForEach(categories, id: \.self) { category in
-                    HStack {
-                        Circle()
-                            .fill(Color.blue)
-                            .frame(width: 8, height: 8)
-                        Text(category)
+        NavigationStack {
+            Form {
+                Section("Валюта") {
+                    Picker("Выберите валюту", selection: $selectedCurrency) {
+                        Text("₽ Рубль").tag(Currency.rub)
+                        Text("$ Доллар").tag(Currency.usd)
+                        Text("€ Евро").tag(Currency.eur)
                     }
-                }
-                .onDelete { indexSet in
-                    if let index = indexSet.first {
-                        SettingsManager.shared.deleteCategory(at: index)
-                        categories = SettingsManager.shared.categories
+                    .pickerStyle(.menu)
+                    .onChange(of: selectedCurrency) { _, newValue in
+                        settingsManager.currentCurrency = newValue
                     }
                 }
                 
-                HStack {
-                    TextField("Новая категория", text: $newCategory)
-                    
-                    Button("Добавить") {
-                        addCategory()
+                Section("Категории") {
+                    ForEach(settingsManager.categories, id: \.self) { category in
+                        HStack {
+                            Circle()
+                                .fill(Color.blue)
+                                .frame(width: 8, height: 8)
+                            Text(category)
+                        }
                     }
-                    .disabled(newCategory.isEmpty)
+                    .onDelete { indexSet in
+                        if let index = indexSet.first {
+                            settingsManager.deleteCategory(at: index)
+                        }
+                    }
+                
+                    HStack {
+                        TextField("Новая категория", text: $newCategory)
+                            .focused($isTextFieldFocused)
+                        
+                        Button("Добавить") {
+                            addCategory()
+                        }
+                        .disabled(newCategory.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    }
                 }
             }
-        }
-        .navigationTitle("Настройки")
-        .alert(alertText, isPresented: $showAlert) {
-            Button("OK") { }
+            .navigationTitle("Настройки")
+            .alert(alertText, isPresented: $showAlert) {
+                Button("OK") { }
+            }
         }
     }
     
@@ -68,22 +77,20 @@ struct SettingsView: View {
         
         guard !name.isEmpty else { return }
         
-        guard !categories.contains(name) else {
+        guard !settingsManager.categories.contains(name) else {
             alertText = "Категория '\(name)' уже есть"
             showAlert = true
             return
         }
         
-        SettingsManager.shared.addCategory(name)
-        categories = SettingsManager.shared.categories
+        settingsManager.addCategory(name)
         newCategory = ""
-        
-        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        isTextFieldFocused = false
     }
 }
 
 #Preview {
-    NavigationView {
+    NavigationStack {
         SettingsView()
     }
 }
