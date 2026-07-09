@@ -10,6 +10,8 @@ import SwiftUI
 
 struct RingChartView: View {
     let incomeRatio: Double
+    @State private var isShowingAnalytics = false
+
     
     var body: some View {
         VStack {
@@ -37,6 +39,14 @@ struct RingChartView: View {
                     Text("\(Int(incomeRatio * 100))% / \(Int((1 - incomeRatio) * 100))%")
                         .font(.headline)
                         .fontWeight(.bold)
+                }
+            }
+            .onTapGesture {
+                isShowingAnalytics = true
+            }
+            .sheet(isPresented: $isShowingAnalytics) {
+                NavigationStack {
+                    AnalyticsView()
                 }
             }
             
