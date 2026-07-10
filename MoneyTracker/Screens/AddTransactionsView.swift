@@ -73,6 +73,9 @@ struct AddTransactionView: View {
             .alert(viewModel.errorMessage, isPresented: $viewModel.showError) {
                 Button("OK") { }
             }
+            .onAppear {
+                viewModel.updateCategories()
+            }
         }
     }
     
