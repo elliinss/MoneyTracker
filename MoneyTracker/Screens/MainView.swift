@@ -43,6 +43,11 @@ struct MainView: View {
             .navigationTitle("Money Tracker")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    NavigationLink(destination: AllTransactionsView(viewModel: viewModel)) {
+                        Image(systemName: "list.bullet")
+                    }
+                }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     NavigationLink(destination: SettingsView()) {
                         Image(systemName: "gear")
