@@ -73,6 +73,9 @@ struct AddTransactionView: View {
             .alert(alertMessage, isPresented: $showAlert) {
                 Button("OK") { }
             }
+            .onAppear {
+                viewModel.updateCategories()
+            }
         }
     }
     
