@@ -10,6 +10,7 @@ import SwiftUI
 
 struct RingChartView: View {
     let incomeRatio: Double
+    let viewModel: TransactionsViewModel
     @State private var isShowingAnalytics = false
 
     
@@ -46,7 +47,7 @@ struct RingChartView: View {
             }
             .sheet(isPresented: $isShowingAnalytics) {
                 NavigationStack {
-                    AnalyticsView()
+                    AnalyticsView(viewModel: viewModel)
                 }
             }
             

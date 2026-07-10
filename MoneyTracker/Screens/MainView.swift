@@ -25,7 +25,7 @@ struct MainView: View {
                     )
                     
                     // MARK: - Кольцевая диаграмма
-                    RingChartView(incomeRatio: viewModel.incomeRatio)
+                    RingChartView(incomeRatio: viewModel.incomeRatio, viewModel: viewModel)
                         .frame(height: 200)
                     
                     // MARK: - Последние операции
