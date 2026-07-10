@@ -21,11 +21,6 @@ struct ContentView: View {
                         .fontWeight(.bold)
                     
                     VStack(spacing: 15) {
-                        NavigationLink("Настройки") {
-                            SettingsView()
-                        }
-                        .buttonStyle(.borderedProminent)
-                        
                         NavigationLink("Вход") {
                             LoginView(isLoggedIn: $isLoggedIn)
                         }
